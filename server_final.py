@@ -2,7 +2,7 @@
 
 import socket
 
-SERVER_IP = '0.0.0.0'
+SERVER_IP = '0.0.0.0' #Set to actual server device's IP
 SERVER_PORT = 50007
 BUFFER_SIZE = 4096
 
