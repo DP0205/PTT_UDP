@@ -11,7 +11,7 @@ CHANNELS = 1
 RATE = 44100
 BUFFER_SIZE = 4096
 
-SERVER_IP = '192.168.1.16'  # Replace with your server IP
+SERVER_IP = '192.168.1.16'  # Replace with server device's IP
 SERVER_PORT = 50007
 
 running = True
