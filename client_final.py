@@ -1,4 +1,3 @@
-# lwc1.py – Client with mic request/grant handling
 
 import socket
 import threading
@@ -25,7 +24,7 @@ stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE,
                 input=True, output=True, frames_per_buffer=CHUNK)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('0.0.0.0', 0))  # OS assigns port
+sock.bind(('0.0.0.0', 0)) 
 
 def send_audio():
     while running:
