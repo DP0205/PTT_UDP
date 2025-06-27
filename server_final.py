@@ -2,6 +2,8 @@
 import socket
 import time
 
+#implementing a room based system 
+
 SERVER_IP = '0.0.0.0'  #Set to IP of the server device
 SERVER_PORT = 50007
 BUFFER_SIZE = 4096
