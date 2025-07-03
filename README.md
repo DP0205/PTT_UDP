@@ -1,4 +1,6 @@
 Push-to-Talk (PTT) Communication System Using TCP and UDP
+
+
 This project implements a Push-to-Talk (PTT) real-time communication system that allows multiple users to participate in voice communication over a local network, similar to traditional walkie-talkies. The system is designed to ensure controlled access to the microphone, permitting only one speaker at a time while allowing all connected users to listen in real-time. It uses a combination of TCP for control signaling and UDP for audio streaming, ensuring both reliability of command messages and low-latency audio transmission.
 
 =>System Architecture Overview
