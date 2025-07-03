@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul  2 10:51:25 2025
-
-@author: 
-"""
 
 import socket
 import threading
@@ -13,9 +7,9 @@ import json
 import time
 from pynput import keyboard
 
-SERVER_IP = "192.168.1.16"  # Change to match your server
+SERVER_IP = "192.168.1.16"  # Change to match your server IP
 TCP_PORT = 9999
-UDP_SERVER_PORT = 9999  # Server listens on this for incoming voice
+UDP_SERVER_PORT = 9999  
 RATE = 44100
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
