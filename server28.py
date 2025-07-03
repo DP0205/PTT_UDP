@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul  2 10:52:01 2025
-
-@author: 
-"""
 
 import socket
 import threading
@@ -19,14 +12,14 @@ def handle_tcp(conn, addr):
     global current_mic_holder
     conn.settimeout(1.0)  # Enable timeout to detect disconnects
     username = None
-    try:
+    try: #getting the username of the client trying to connect to server
         username = conn.recv(1024).decode().strip()
         udp_port = UDP_PORT_BASE + len(clients)
         clients[username] = {'tcp': conn, 'addr': addr[0], 'udp': udp_port}
         print(f"[+] {username} connected from {addr[0]} (UDP {udp_port})")
 
         # Send UDP port assignment
-        conn.send(json.dumps({"udp_port": udp_port}).encode())
+        conn.send(json.dumps({"udp_port": udp_port}).encode())  #assigning a unique port num to client
 
         while True:
             try:
@@ -52,7 +45,7 @@ def handle_tcp(conn, addr):
                     print(f"[MIC] Released by {username}")
     except:
         print(f"[!] Error with connection from {addr}")
-    finally:
+    finally:  #removing the client from user list when they disconnect from server
         if username:
             print(f"[!] {username} disconnected")
             if username in clients:
@@ -62,7 +55,7 @@ def handle_tcp(conn, addr):
                 broadcast("MIC_RELEASED")
         conn.close()
 
-def broadcast(msg):
+def broadcast(msg):    #sending a control message to all clients over tcp
     for client in list(clients.values()):
         try:
             client['tcp'].send(msg.encode())
