@@ -7,7 +7,7 @@ import json
 import time
 from pynput import keyboard
 
-SERVER_IP = "192.168.1.16"  # Change to match your server IP
+SERVER_IP = "192.168.1.16"  # Change to match your server's IP
 TCP_PORT = 9999
 UDP_SERVER_PORT = 9999  
 RATE = 44100
@@ -32,7 +32,7 @@ label.pack(padx=20, pady=20)
 def update_label(text, color):
     label.config(text=text, fg=color)
 
-def recv_control():
+def recv_control(): #client side TCP listener for control messages
     global mic_allowed
     while True:
         try:
@@ -97,7 +97,7 @@ def on_release(key):
 
 def setup():
     global tcp_sock, udp_sock, udp_port
-
+    #setting up TCP socket to broadcast username on connection to server
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.connect((SERVER_IP, TCP_PORT))
     tcp_sock.send(username.encode())
@@ -105,7 +105,7 @@ def setup():
     data = tcp_sock.recv(1024).decode()
     info = json.loads(data)
     udp_port = info['udp_port']
-
+    
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind(('', udp_port))
 
