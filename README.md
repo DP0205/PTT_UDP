@@ -9,7 +9,7 @@ The system is composed of two main components:
 
 Server – Manages client connections, microphone access, and routes audio data.
 
-Client – Allows users to request mic access, send audio if allowed, and receive real-time audio from other users.
+Client – Receive real-time audio from other users.
 
 
 =>Threaded Model and Communication Protocol
@@ -32,9 +32,7 @@ Handled on the server using a dedicated thread per client.
 
 Used to send and receive audio streams.
 
-The client sends audio only if mic access is granted.
-
-The server forwards the received audio to all other clients.
+The server forwards the received audio received from a client to all other clients.
 
 Provides low-latency, connectionless transmission and real-time playback.
 
@@ -48,7 +46,7 @@ The system enforces a single-speaker model:
 
 -The user can now transmit audio via UDP to the server, which forwards it to all listeners.
 
--On spacebar release, the client sends MIC_RELEASE, freeing the mic for others.
+-On spacebar release, the client sends MIC_RELEASE.
 
 This mechanism:
 
@@ -64,14 +62,12 @@ A simple Tkinter-based GUI is included in each client:
 
 -Displays connection status
 
--Shows whether the user can speak or must wait
+-Shows whether the user can speak
 
 -Updates in real time based on server broadcasts
 
 ->Color-coded labels:
 
 🟢 Green – Mic access granted (Can Speak)
-
-🔴 Red – Mic denied (Cannot Speak)
 
 ⚫ Gray – Disconnected or error
