@@ -4,9 +4,9 @@ import threading
 import tkinter as tk
 import pyaudio
 import json
-import time
 from pynput import keyboard
 
+# Configuration
 SERVER_IP = "192.168.1.16"  # Change to match your server's IP
 TCP_PORT = 9999
 UDP_SERVER_PORT = 9999  
@@ -24,6 +24,7 @@ tcp_sock = None
 udp_sock = None
 username = input("Enter your name: ").strip()
 
+# GUI setup
 root = tk.Tk()
 root.title(f"PTT - {username}")
 label = tk.Label(root, text="Connecting...", font=("Arial", 24))
@@ -40,13 +41,18 @@ def recv_control(): #client side TCP listener for control messages
             if msg.startswith("MIC_GRANTED"):
                 holder = msg.split(":")[1]
                 mic_allowed = (holder == username)
-                update_label("Can Speak" if mic_allowed else "Cannot Speak", "green" if mic_allowed else "red")
+                if mic_pressed and mic_allowed:
+                    update_label("Speaking", "green")
+                elif not mic_pressed:
+                    update_label("Connected", "black")
             elif msg == "MIC_RELEASED":
-                mic_allowed = True
-                update_label("Can Speak", "green")
-            elif msg == "MIC_DENIED":
                 mic_allowed = False
-                update_label("Cannot Speak", "red")
+                if not mic_pressed:
+                    update_label("Connected", "black")
+            elif msg == "MIC_DENIED":
+                # just in case
+                mic_allowed = False
+                update_label("Connected", "black")
         except:
             update_label("Disconnected", "gray")
             break
@@ -64,6 +70,7 @@ def recv_audio():
 def send_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE,
                     input=True, frames_per_buffer=CHUNK)
+    update_label("Speaking", "green")
     print("[AUDIO] Start sending")
     while mic_pressed and mic_allowed:
         try:
@@ -74,6 +81,7 @@ def send_audio():
             break
     stream.stop_stream()
     stream.close()
+    update_label("Connected", "black")
     print("[AUDIO] Stop sending")
 
 def on_press(key):
@@ -102,18 +110,22 @@ def setup():
     tcp_sock.connect((SERVER_IP, TCP_PORT))
     tcp_sock.send(username.encode())
 
+    # Receive UDP port from the server
     data = tcp_sock.recv(1024).decode()
     info = json.loads(data)
     udp_port = info['udp_port']
-    
+
+    # Bind UDP socket for receiving voice
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind(('', udp_port))
 
+    # Start threads
     threading.Thread(target=recv_control, daemon=True).start()
     threading.Thread(target=recv_audio, daemon=True).start()
 
     update_label("Connected. Can Speak", "green")
 
+    # Start keyboard listener
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.daemon = True
     listener.start()
