@@ -32,12 +32,11 @@ def handle_tcp(conn, addr):
                 break
 
             if msg == "MIC_REQUEST":
-                if current_mic_holder is None:
+                if current_mic_holder != username:
                     current_mic_holder = username
                     broadcast(f"MIC_GRANTED:{username}")
-                    print(f"[MIC] Granted to {username}")
-                else:
-                    conn.send(b"MIC_DENIED")
+                    print(f"[MIC] Forcefully granted to {username}")
+                    
             elif msg == "MIC_RELEASE":
                 if current_mic_holder == username:
                     current_mic_holder = None
