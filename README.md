@@ -1,7 +1,17 @@
-# PTT_UDP
-Developing a Push-To-Talk functionality using UDP to enable communication between two clients through a server
-We are using Python's socket module to create a Datagram Socket and establish a connection between the client and server. We use the keyboard module to allow the user to start talking by pushing the spacebar button. 
-Audio data starts getting recorded using the PyAudio module and transferred to the sever using the UDP Protocol. This is then sent to the other client where its unwrapped and the audio is heard.
+🔊 Room-Based Push-To-Talk (PTT) Voice Communication System over UDP
+This project implements a real-time, room-based Push-To-Talk (PTT) voice communication system using Python and UDP sockets. Designed for low-latency local communication, it enables multiple users to join virtual rooms and communicate in a structured way—one speaker at a time, simulating traditional walkie-talkie behavior.
 
-Why was UDP used?
-This feature is being developed for a defense communication company and would eventually part of the final product that could be used by defence personnel. Due to the lightweight software and and higher speeds of transmission, both of which are crucial in critical situations, the choice was made to use UDP instead of the more secure TCP
+🚀 Features
+🔄 Client-Server Architecture with central room and mic arbitration.
+
+📡 UDP-Based Audio Transmission for low-latency, real-time voice streaming.
+
+🧠 Mic Arbitration Logic to ensure only one speaker per room at a time.
+
+👥 Dynamic Room Management — clients can create, join, and invite others.
+
+🖥️ Graphical User Interface (GUI) built with Tkinter for usability.
+
+🎙️ Push-to-Talk Control using spacebar (via pynput).
+
+⚡ Interrupt Functionality — any user can override the current speaker, mimicking real-world walkie-talkies.
