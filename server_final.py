@@ -1,70 +1,99 @@
-
 import socket
-import time
+import threading
+import json
 
-#implementing a room based system 
+TCP_PORT = 9999
+UDP_PORT_BASE = 10000
+clients = {}  # username → { 'tcp': sock, 'addr': ip, 'udp': port }
+current_mic_holder = None
 
-SERVER_IP = '0.0.0.0'  #Set to IP of the server device
-SERVER_PORT = 50007
-BUFFER_SIZE = 4096
-
-clients = set()
-current_speaker = None
-last_packet_time = {}
-MIC_TIMEOUT = 2  # seconds to auto-release mic
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((SERVER_IP, SERVER_PORT))
-
-print(f"Server listening on {SERVER_IP}:{SERVER_PORT}...")
-
-while True:
+def handle_tcp(conn, addr):
+    global current_mic_holder
+    conn.settimeout(1.0)
+    username = None
     try:
-        data, addr = sock.recvfrom(BUFFER_SIZE)
+        # Receive username
+        username = conn.recv(1024).decode().strip()
+        udp_port = UDP_PORT_BASE + len(clients)
+        clients[username] = {'tcp': conn, 'addr': addr[0], 'udp': udp_port}
+        print(f"[+] {username} connected from {addr[0]} (UDP {udp_port})")
 
-        if addr not in clients:
-            clients.add(addr)
+        conn.send(json.dumps({"udp_port": udp_port}).encode())
 
-        if data.startswith(b"CTRL:"):
-            message = data.decode().strip()
+        while True:
+            try:
+                msg = conn.recv(1024).decode().strip()
+                if not msg:
+                    break
+            except socket.timeout:
+                continue
+            except:
+                break
 
-            if message == "CTRL:PTT_REQUEST":
-                if current_speaker is None:
-                    current_speaker = addr
-                    last_packet_time[addr] = time.time()
-                    print(f"Mic granted to {addr}")
-                    sock.sendto(b"CTRL:PTT_GRANTED", addr)
-                    for client in clients:
-                        if client != addr:
-                            sock.sendto(b"CTRL:MIC_BUSY", client)
-                else:
-                    sock.sendto(b"CTRL:MIC_BUSY", addr)
+            if msg == "MIC_REQUEST":
+                if current_mic_holder != username:
+                    current_mic_holder = username
+                    broadcast(f"MIC_GRANTED:{username}")
+                    print(f"[MIC] Forcefully granted to {username}")
 
-            elif message == "CTRL:PTT_RELEASE":
-                if addr == current_speaker:
-                    print(f"{addr} released the mic.")
-                    current_speaker = None
-                    for client in clients:
-                        sock.sendto(b"CTRL:MIC_FREE", client)
+            elif msg == "MIC_RELEASE":
+                if current_mic_holder == username:
+                    current_mic_holder = None
+                    broadcast("MIC_RELEASED")
+                    print(f"[MIC] Released by {username}")
 
+    except:
+        print(f"[!] Error with connection from {addr}")
+    finally:
+        if username:
+            print(f"[!] {username} disconnected")
+            if username in clients:
+                del clients[username]
+            if current_mic_holder == username:
+                current_mic_holder = None
+                broadcast("MIC_RELEASED")
+        conn.close()
+
+def broadcast(msg):
+    for client in list(clients.values()):
+        try:
+            client['tcp'].send(msg.encode())
+        except:
             continue
 
-        if addr == current_speaker:
-            last_packet_time[addr] = time.time()
-            for client in clients:
-                if client != addr:
-                    sock.sendto(data, client)
-        else:
-            pass
+def udp_forward():
+    udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_sock.bind(('', UDP_PORT_BASE - 1))
+    print(f"[UDP] Listening for voice packets on port {UDP_PORT_BASE - 1}")
 
-        if current_speaker and time.time() - last_packet_time.get(current_speaker, 0) > MIC_TIMEOUT:
-            print(f"Mic timeout: {current_speaker}")
-            current_speaker = None
-            for client in clients:
-                sock.sendto(b"CTRL:MIC_FREE", client)
+    while True:
+        try:
+            data, addr = udp_sock.recvfrom(2048)
+            sender = None
+            for u, info in clients.items():
+                if info['addr'] == addr[0]:
+                    sender = u
+                    break
+            if sender == current_mic_holder:
+                
+                for u, info in clients.items():
+                    if u != sender:
+                        udp_sock.sendto(data, (info['addr'], info['udp']))
+        except Exception as e:
+            print(f"[UDP ERROR] {e}")
 
-    except Exception as e:
-        print(f"Server error: {e}")
-        break
+def main():
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.bind(('', TCP_PORT))
+    tcp_sock.listen(5)
+    print(f"[TCP] Server listening on port {TCP_PORT}")
 
-sock.close()
+    threading.Thread(target=udp_forward, daemon=True).start()
+
+    while True:
+        conn, addr = tcp_sock.accept()
+        threading.Thread(target=handle_tcp, args=(conn, addr), daemon=True).start()
+
+if __name__ == "__main__":
+    main()
+
