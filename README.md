@@ -1,19 +1,74 @@
-🔊 Room-Based Push-To-Talk (PTT) Voice Communication System over UDP
 
-This project implements a real-time, room-based Push-To-Talk (PTT) voice communication system using Python and UDP sockets. Designed for low-latency local communication, it enables multiple users to join virtual rooms and communicate in a structured way—one speaker at a time, simulating traditional walkie-talkie behavior.
+Push-to-Talk (PTT) Communication System Using TCP and UDP
 
-🚀 Features
 
-Client-Server Architecture with central room and mic arbitration.
+This project implements a Push-to-Talk (PTT) real-time communication system that allows multiple users to participate in voice communication over a local network, similar to traditional walkie-talkies. The system is designed to ensure controlled access to the microphone, permitting only one speaker at a time while allowing all connected users to listen in real-time. It uses a combination of TCP for control signaling and UDP for audio streaming, ensuring both reliability of command messages and low-latency audio transmission.
 
-UDP-Based Audio Transmission for low-latency, real-time voice streaming.
+=>System Architecture Overview
 
-Mic Arbitration Logic to ensure only one speaker per room at a time.
+The system is composed of two main components: 
 
-Dynamic Room Management — clients can create, join, and invite others.
+Server – Manages client connections, microphone access, and routes audio data.
 
-Graphical User Interface (GUI) built with Tkinter for usability.
+Client – Receive real-time audio from other users.
 
-Push-to-Talk Control using spacebar (via pynput).
 
-Interrupt Functionality — any user can override the current speaker, mimicking real-world walkie-talkies.
+=>Threaded Model and Communication Protocol
+
+->TCP (Signaling)
+
+Used to manage control commands:
+
+Username registration
+
+Microphone request and release
+
+Broadcast mic status (e.g., MIC_GRANTED, MIC_RELEASED)
+
+Ensures reliable delivery of control messages.
+
+Handled on the server using a dedicated thread per client.
+
+->UDP (Audio Streaming)
+
+Used to send and receive audio streams.
+
+The server forwards the received audio received from a client to all other clients.
+
+Provides low-latency, connectionless transmission and real-time playback.
+
+->Push-to-Talk Logic
+
+The system enforces a single-speaker model:
+
+-When a user presses the spacebar, a MIC_REQUEST is sent.
+
+-If the mic is free, the server assigns mic access and broadcasts a MIC_GRANTED message.
+
+-The user can now transmit audio via UDP to the server, which forwards it to all listeners.
+
+-On spacebar release, the client sends MIC_RELEASE.
+
+This mechanism:
+
+-Avoids collisions
+
+-Simulates walkie-talkie behavior
+
+-Enforces orderly communication
+
+->User Interface
+
+A simple Tkinter-based GUI is included in each client:
+
+-Displays connection status
+
+-Shows whether the user can speak
+
+-Updates in real time based on server broadcasts
+
+->Color-coded labels:
+
+🟢 Green – Mic access granted (Can Speak)
+
+⚫ Gray – Disconnected or error

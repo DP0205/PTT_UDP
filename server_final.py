@@ -1,3 +1,5 @@
+
+
 import socket
 import threading
 import json
@@ -9,16 +11,16 @@ current_mic_holder = None
 
 def handle_tcp(conn, addr):
     global current_mic_holder
-    conn.settimeout(1.0)
+    conn.settimeout(1.0)  # Enable timeout to detect disconnects
     username = None
-    try:
-        # Receive username
+    try: #getting the username of the client trying to connect to server
         username = conn.recv(1024).decode().strip()
         udp_port = UDP_PORT_BASE + len(clients)
         clients[username] = {'tcp': conn, 'addr': addr[0], 'udp': udp_port}
         print(f"[+] {username} connected from {addr[0]} (UDP {udp_port})")
 
-        conn.send(json.dumps({"udp_port": udp_port}).encode())
+        # Send UDP port assignment
+        conn.send(json.dumps({"udp_port": udp_port}).encode())  #assigning a unique port num to client
 
         while True:
             try:
@@ -35,16 +37,15 @@ def handle_tcp(conn, addr):
                     current_mic_holder = username
                     broadcast(f"MIC_GRANTED:{username}")
                     print(f"[MIC] Forcefully granted to {username}")
-
+                    
             elif msg == "MIC_RELEASE":
                 if current_mic_holder == username:
                     current_mic_holder = None
                     broadcast("MIC_RELEASED")
                     print(f"[MIC] Released by {username}")
-
     except:
         print(f"[!] Error with connection from {addr}")
-    finally:
+    finally:  #removing the client from user list when they disconnect from server
         if username:
             print(f"[!] {username} disconnected")
             if username in clients:
@@ -54,7 +55,7 @@ def handle_tcp(conn, addr):
                 broadcast("MIC_RELEASED")
         conn.close()
 
-def broadcast(msg):
+def broadcast(msg):    #sending a control message to all clients over tcp
     for client in list(clients.values()):
         try:
             client['tcp'].send(msg.encode())
@@ -63,7 +64,7 @@ def broadcast(msg):
 
 def udp_forward():
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    udp_sock.bind(('', UDP_PORT_BASE - 1))
+    udp_sock.bind(('', UDP_PORT_BASE - 1))  # Voice packets come here
     print(f"[UDP] Listening for voice packets on port {UDP_PORT_BASE - 1}")
 
     while True:
@@ -75,7 +76,7 @@ def udp_forward():
                     sender = u
                     break
             if sender == current_mic_holder:
-                
+                print(f"[VOICE] Forwarding audio from {sender}")
                 for u, info in clients.items():
                     if u != sender:
                         udp_sock.sendto(data, (info['addr'], info['udp']))
@@ -96,4 +97,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
