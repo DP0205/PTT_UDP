@@ -6,6 +6,7 @@ import pyaudio
 import json
 from pynput import keyboard
 
+
 # Configuration
 SERVER_IP = "192.168.1.16"  # Change to match your server's IP
 TCP_PORT = 9999
@@ -34,6 +35,7 @@ def update_label(text, color):
     label.config(text=text, fg=color)
 
 def recv_control(): #client side TCP listener for control messages
+
     global mic_allowed
     while True:
         try:
@@ -56,6 +58,7 @@ def recv_control(): #client side TCP listener for control messages
         except:
             update_label("Disconnected", "gray")
             break
+
 
 def recv_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE,
@@ -84,6 +87,7 @@ def send_audio():
     update_label("Connected", "black")
     print("[AUDIO] Stop sending")
 
+
 def on_press(key):
     global mic_pressed
     if key == keyboard.Key.space and not mic_pressed:
@@ -110,22 +114,28 @@ def setup():
     tcp_sock.connect((SERVER_IP, TCP_PORT))
     tcp_sock.send(username.encode())
 
+
     # Receive UDP port from the server
+
     data = tcp_sock.recv(1024).decode()
     info = json.loads(data)
     udp_port = info['udp_port']
+
 
     # Bind UDP socket for receiving voice
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind(('', udp_port))
 
     # Start threads
+
     threading.Thread(target=recv_control, daemon=True).start()
     threading.Thread(target=recv_audio, daemon=True).start()
 
     update_label("Connected. Can Speak", "green")
 
+
     # Start keyboard listener
+
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.daemon = True
     listener.start()
